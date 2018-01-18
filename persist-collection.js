@@ -39,7 +39,7 @@ Mongo.Collection.prototype.getPersisted = function (keys) {
   else if (_.isArray(keys) || !keys)
     return store.getItems(keys || null)
   else
-    throw new Error('Invalid keys argument.')
+    throw new Error('Invalid key(s) argument.')
 }
 
 Mongo.Collection.prototype.removePersisted = function (keys) {
@@ -97,16 +97,27 @@ Mongo.Collection.prototype.syncPersisted = function () {
 
           if (doc === false)
             removed.push(key)
-          else if (doc._insertedOffline)
+          else if (doc._insertedOffline && doc._updatedOffline) {
+
+            delete doc._insertedOffline
+            delete doc._updatedOffline
+
             inserted.push(doc)
-          else if (doc._updatedOffline)
+          } else if (doc._insertedOffline) {
+
+            delete doc._insertedOffline
+
+            inserted.push(doc)
+          } else if (doc._updatedOffline) {
+
+            delete doc._updatedOffline
+
             updated.push(doc)
+          }
 
           if (doc !== false) {
 
             doc._id = key
-            delete doc._insertedOffline
-            delete doc._updatedOffline
 
             col._collection._docs.set(key, doc)
           }
@@ -171,14 +182,13 @@ Mongo.Collection.prototype.attachPersister = function (selector, options) {
         if (err)
           console.error(err)
       })
-      console.log('insertedOffline: ' + !!doc._insertedOffline)
     },
     changed (doc) {
 
       const _id = doc._id
       delete doc._id
 
-      if (!Meteor.status().connected && !col.isSyncing() && !doc._insertedOffline)
+      if (!Meteor.status().connected && !col.isSyncing())
         doc._updatedOffline = true
 
       persister._store.setItem(_id, doc).catch(err => {
@@ -186,28 +196,14 @@ Mongo.Collection.prototype.attachPersister = function (selector, options) {
         if (err)
           console.error(err)
       })
-
-      console.log('updatedOffline: ' + !!doc._updatedOffline)
     },
     removed (doc) {
 
-      const _id = doc._id
-
-      if (Meteor.status().connected || doc._insertedOffline)
-        persister._store.removeItem(_id).catch(err => {
+      if (!Meteor.status().connected && !col.isSyncing())
+        persister._store.setItem(doc._id, false).catch(err => {
 
           if (err)
             console.error(err)
-
-          console.log('removedOnline1')
-        })
-      else
-        persister._store.setItem(_id, false).catch(err => {
-
-          if (err)
-            console.error(err)
-
-          console.log('removedOffline2')
         })
     }
   })
