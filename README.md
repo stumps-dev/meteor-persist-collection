@@ -46,7 +46,8 @@ Collection.syncPersister()
 This function will synchronize your persisted collection with the Mongo collection.
 The return value consists of documents which have been inserted/updated/removed while the app was offline. This could be used to synchronize with the server collection.
 > note:
-Meteor.status().connected MUST be false when editing your collection offline, otherwise changes wont be returned by this function.
+Meteor.status().connected MUST be false when editing your collection offline, otherwise changes wont be returned by this function.  
+Documents which were removed offline will not be removed on the client when synchronizing.
 #### Detect synchronization
 ```js
 Collection.isSyncing()
@@ -82,7 +83,7 @@ Collection.getPersisted(keys or key)
 ```
 #### Remove persisted documents
 ```js
-Collection.getPersisted(keys or key)
+Collection.removePersisted(keys or key)
 
 // Returns: Promise
 // Pass either an array of keys or just a key.
