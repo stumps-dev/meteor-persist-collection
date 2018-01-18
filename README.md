@@ -22,7 +22,7 @@ Collection.attachPersister([selector], [options])
 Your collection will now be persisted in the browser storage. Yes it's as easy as that!
 #### Synchronizing
 ```js
-Collection.syncPersister()
+Collection.syncPersisted()
 
 // Returns (only used for server synchronization):
 {
