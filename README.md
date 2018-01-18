@@ -53,7 +53,7 @@ Collection.isSyncing()
 
 // Returns: ReactiveVar (boolean)
 ```
-## Migration helpers
+## Miscellaneous functions
 #### Set persisted documents
 ```js
 Collection.setPersisted(data)
