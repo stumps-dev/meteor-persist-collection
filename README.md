@@ -1,5 +1,5 @@
 # What is this?
-This package will enable your app to persist a collection in the browser storage!
+This package will enable your app to persist a collection in the browser storage!  
 It's still experimental but it runs fine for now.
 
 To be fair, this runs ALOT faster than GroundDB.
