@@ -43,7 +43,7 @@ Collection.syncPersisted()
   ]
 }
 ```
-This function will synchronize your persisted collection with the Mongo collection.
+This function will synchronize your persisted collection with the Minimongo collection.
 The return value consists of documents which have been inserted/updated/removed while the app was offline. This could be used to synchronize with the server collection.
 > note:
 Meteor.status().connected MUST be false when editing your collection offline, otherwise changes wont be returned by this function.  
@@ -60,14 +60,14 @@ Collection.isSyncing()
 Collection.setPersisted(data)
 
 // Returns: Promise
-// You can pass an array with the key-value pairs:
+// You can pass an array with key-value objects:
 const data = [
   { key: 'some id1', value: {...doc} },
   { key: 'some id2', value: {...doc} },
   { key: '...', value: ... }
 ]
 
-// Or you can pass a object with the keys as properties:
+// Or you can pass an object with key-value pairs:
 const data = {
   'some id1': {...doc},
   'some id2': {...doc},
