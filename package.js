@@ -1,6 +1,6 @@
 Package.describe({
   name: 'stumps:persist-collection',
-  version: '1.0.0',
+  version: '1.0.2',
   summary: 'Persist a collection for offline use.',
   git: 'https://github.com/stumpss/meteor-persist-collection',
   documentation: 'README.md'
@@ -9,16 +9,17 @@ Package.describe({
 Package.onUse(function(api) {
 
   api.use([
-    'underscore',
-    'ecmascript',
-    'reactive-var',
+    'underscore@1.0.10',
+    'ecmascript@0.9.0',
+    'mongo@1.1.24',
+    'reactive-var@1.0.11'
   ])
 
   api.addFiles('persist-collection.js', 'client')
 
   Npm.depends({
-    localforage: 'git+https://github.com/localForage/localForage.git',
-    'localforage-getitems': 'git+https://github.com/localForage/localForage-getItems.git',
-    'localforage-setitems': 'git+https://github.com/localForage/localForage-setItems.git'
+    localforage: 'git+https://github.com/localForage/localForage.git#master',
+    'localforage-getitems': 'git+https://github.com/localForage/localForage-getItems.git#master',
+    'localforage-setitems': 'git+https://github.com/localForage/localForage-setItems.git#master'
   })
 })
