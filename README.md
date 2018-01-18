@@ -20,6 +20,11 @@ const Collection = Mongo.Collection('collection')
 Collection.attachPersister([selector], [options])
 ```
 Your collection will now be persisted in the browser storage. Yes it's as easy as that!
+#### Stop persisting
+```js
+Collection.detachPersister()
+```
+This will stop persisting any further changes to the collection.
 #### Synchronizing
 ```js
 Collection.syncPersisted()
