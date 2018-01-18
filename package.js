@@ -12,7 +12,6 @@ Package.onUse(function(api) {
     'underscore',
     'ecmascript',
     'reactive-var',
-    'minimongo'
   ])
 
   api.addFiles('persist-collection.js', 'client')
