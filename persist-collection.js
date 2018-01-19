@@ -20,13 +20,10 @@ Mongo.Collection.prototype.setPersisted = function (data) {
     storeName: this._name
   })
 
-  if (_.isArray(data) || _.isObject(data))
-    return store.setItems(data)
-  else
-    throw new Error('Invalid data argument.')
+  return store.setItems(data)
 }
 
-Mongo.Collection.prototype.getPersisted = function (keys) {
+Mongo.Collection.prototype.getPersisted = function (ids) {
 
   const store = localforage.createInstance({
     driver: [localforage.WEBSQL, localforage.INDEXEDDB, localforage.LOCALSTORAGE],
@@ -34,15 +31,15 @@ Mongo.Collection.prototype.getPersisted = function (keys) {
     storeName: this._name
   })
 
-  if (_.isString(keys))
-    return store.getItem(key)
-  else if (_.isArray(keys) || !keys)
-    return store.getItems(keys || null)
+  if (_.isString(ids))
+    return store.getItem(ids)
+  else if (_.isArray(ids) || !ids)
+    return store.getItems(ids || null)
   else
-    throw new Error('Invalid key(s) argument.')
+    throw new Error('Invalid id(\'s) argument.')
 }
 
-Mongo.Collection.prototype.removePersisted = function (keys) {
+Mongo.Collection.prototype.removePersisted = function (ids) {
 
   const store = localforage.createInstance({
     driver: [localforage.WEBSQL, localforage.INDEXEDDB, localforage.LOCALSTORAGE],
@@ -50,12 +47,12 @@ Mongo.Collection.prototype.removePersisted = function (keys) {
     storeName: this._name
   })
 
-  if (_.isString(keys))
-    return store.removeItem(keys)
-  else if (_.isArray(keys))
-    return Promise.all(keys.map(key => store.removeItem(key)))
+  if (_.isString(ids))
+    return store.removeItem(ids)
+  else if (_.isArray(ids))
+    return Promise.all(ids.map(id => store.removeItem(id)))
   else
-    throw new Error('Invalid key(s) argument.')
+    throw new Error('Invalid id(\'s) argument.')
 }
 
 Mongo.Collection.prototype.clearPersisted = function () {
@@ -141,26 +138,53 @@ Mongo.Collection.prototype.syncPersisted = function () {
   })
 }
 
-Mongo.Collection.prototype.detachPersister = function () {
+Mongo.Collection.prototype.detachPersisters = function (ids) {
 
-  if (!this._persister)
-    return false
+  const persisters = this._persisters
 
-  this._persister._observeHandle.stop()
+  let removeIds = []
 
-  delete this._persister
+  if (_.isString(ids))
+    removeIds.push(ids)
+  else if (_.isArray(ids))
+    removeIds = ids
+  else if (ids)
+    throw new Error('Invalid id(\'s) argument.')
+
+  if (!ids)
+    for (let id in persisters) {
+
+      if (persisters.hasOwnProperty(id)) {
+
+        const persister = persisters[id]
+
+        persister._observeHandle.stop()
+
+        delete this._persisters[id]
+      }
+    }
+  else
+    removeIds.forEach(id => {
+
+      const persister = persisters[id]
+
+      persister._observeHandle.stop()
+
+      delete this._persisters[id]
+    })
 }
 
 Mongo.Collection.prototype.attachPersister = function (selector, options) {
 
-  if (this._persister)
-    return false
-
   const col = this
 
-  col._persister = {}
+  if (!col._persisters)
+    col._persisters = {}
 
-  const persister = col._persister
+  const persisterId = Random.id()
+  const persister = {}
+
+  col._persisters[persisterId] = persister
 
   persister._store = localforage.createInstance({
     driver: [localforage.WEBSQL, localforage.INDEXEDDB, localforage.LOCALSTORAGE],
@@ -207,4 +231,6 @@ Mongo.Collection.prototype.attachPersister = function (selector, options) {
         })
     }
   })
+
+  return persisterId
 }
