@@ -33,7 +33,7 @@ random@1.0.10
 reactive-var@1.0.11
 retry@1.0.9
 routepolicy@1.0.12
-stumps:persist-collection@1.1.0
+stumps:persist-collection@1.1.1
 tracker@1.1.3
 underscore@1.0.10
 webapp@1.4.0
