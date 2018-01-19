@@ -5,11 +5,18 @@ import { extendPrototype as extendSetItems } from 'localforage-setitems'
 extendGetItems(localforage)
 extendSetItems(localforage)
 
-Mongo.Collection.prototype._syncing = new ReactiveVar(false)
+Mongo.Collection.prototype._isCommon = false
+
+Mongo.Collection.prototype.isCommon = function (bool) {
+
+  this._isCommon = bool || true
+}
+
+Mongo.Collection.prototype._isSyncing = new ReactiveVar(false)
 
 Mongo.Collection.prototype.isSyncing = function () {
 
-  return this._syncing.get()
+  return this._isSyncing.get()
 }
 
 Mongo.Collection.prototype.setPersisted = function (data) {
@@ -72,7 +79,7 @@ Mongo.Collection.prototype.syncPersisted = function () {
 
   return new Promise((resolve, reject) => {
 
-    col._syncing.set(true)
+    col._isSyncing.set(true)
 
     const store = localforage.createInstance({
       driver: [localforage.WEBSQL, localforage.INDEXEDDB, localforage.LOCALSTORAGE],
@@ -92,25 +99,27 @@ Mongo.Collection.prototype.syncPersisted = function () {
 
           const doc = pc[key]
 
-          if (doc === false)
-            removed.push(key)
-          else if (doc._insertedOffline && doc._updatedOffline) {
+          if (col._isCommon)
+            if (doc === false) {
 
-            delete doc._insertedOffline
-            delete doc._updatedOffline
+              removed.push(key)
+            } else if (doc._insertedOffline && doc._updatedOffline) {
 
-            inserted.push(doc)
-          } else if (doc._insertedOffline) {
+              delete doc._insertedOffline
+              delete doc._updatedOffline
 
-            delete doc._insertedOffline
+              inserted.push(doc)
+            } else if (doc._insertedOffline) {
 
-            inserted.push(doc)
-          } else if (doc._updatedOffline) {
+              delete doc._insertedOffline
 
-            delete doc._updatedOffline
+              inserted.push(doc)
+            } else if (doc._updatedOffline) {
 
-            updated.push(doc)
-          }
+              delete doc._updatedOffline
+
+              updated.push(doc)
+            }
 
           if (doc !== false) {
 
@@ -121,6 +130,9 @@ Mongo.Collection.prototype.syncPersisted = function () {
         }
       }
 
+      if (Meteor.status().connected)
+        col.removePersisted(removed).catch(console.error)
+
       _.each(col._collection.queries, query => {
 
         col._collection._recomputeResults(query)
@@ -130,7 +142,7 @@ Mongo.Collection.prototype.syncPersisted = function () {
 
       Meteor.defer(() => {
 
-        col._syncing.set(false)
+        col._isSyncing.set(false)
       })
 
       resolve({ inserted, updated, removed })
@@ -198,37 +210,27 @@ Mongo.Collection.prototype.attachPersister = function (selector, options) {
       const _id = doc._id
       delete doc._id
 
-      if (!Meteor.status().connected && !col.isSyncing())
+      if (!Meteor.status().connected && col._isCommon && !col.isSyncing())
         doc._insertedOffline = true
 
-      persister._store.setItem(_id, doc).catch(err => {
-
-        if (err)
-          console.error(err)
-      })
+      persister._store.setItem(_id, doc).catch(console.error)
     },
     changed (doc) {
 
       const _id = doc._id
       delete doc._id
 
-      if (!Meteor.status().connected && !col.isSyncing())
+      if (!Meteor.status().connected && col._isCommon && !col.isSyncing())
         doc._updatedOffline = true
 
-      persister._store.setItem(_id, doc).catch(err => {
-
-        if (err)
-          console.error(err)
-      })
+      persister._store.setItem(_id, doc).catch(console.error)
     },
     removed (doc) {
 
-      if (!Meteor.status().connected && !col.isSyncing())
-        persister._store.setItem(doc._id, false).catch(err => {
-
-          if (err)
-            console.error(err)
-        })
+      if (!Meteor.status().connected && col._isCommon && !col.isSyncing())
+        persister._store.setItem(doc._id, false).catch(console.error)
+      else
+        persister._store.removeItem(doc._id).catch(console.error)
     }
   })
 
