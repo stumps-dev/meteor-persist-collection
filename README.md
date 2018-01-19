@@ -23,6 +23,7 @@ Collection.attachPersister([selector], [options])
 ```
 Your collection will now be persisted in the browser storage. Yes it's as easy as that!  
 You can even add more persisters with different selectors if you want.  
+
 In order to tell the persister to save changes made offline (for server synchronization) use the following function:
 ```js
 Collection.isCommon([bool])
