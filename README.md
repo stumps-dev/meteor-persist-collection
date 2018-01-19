@@ -22,7 +22,13 @@ Collection.attachPersister([selector], [options])
 // returns: Id of the attached persister, use this to detach the persister.
 ```
 Your collection will now be persisted in the browser storage. Yes it's as easy as that!  
-You can even add more persisters with different selectors if you want.
+You can even add more persisters with different selectors if you want.  
+In order to tell the persister to save changes made offline (for server synchronization) use the following function:
+```js
+Collection.isCommon([bool])
+
+// Default argument: true
+```
 #### Stop persisting
 ```js
 Collection.detachPersister(persisterId)
