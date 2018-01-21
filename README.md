@@ -66,9 +66,13 @@ Collection.syncPersisted().then(result => {
 ```
 This function will synchronize your persisted collection with the Minimongo collection.
 The return value consists of documents which have been inserted/updated/removed while the app was offline. This could be used to synchronize with the server collection.
-> note:  
-Meteor.status().connected MUST be false when editing your collection offline, otherwise changes wont be returned by this function.  
-Documents which were removed offline will not be removed on the client when synchronizing.
+##### note on synchronization (important!):
+- Meteor.status().connected MUST be false when editing your collection offline, otherwise changes wont saved and thus wont be returned by this function.  
+- Documents which were removed offline will not be removed on the client when synchronizing.
+- When synchronizing WHILE being connected with the server, you will LOSE inserts/updates made offline so, you MUST use the return value and synchronize with the server if you wish to keep your changes. Otherwise the server will simply overwrite your just synchronized data because of a subscription or something.  
+- After synchronizing and you used the 'removed' property of the return value to remove documents on the server, it is a good idea to remove these document's id's from the persisted collection using Collection.removePersisted(removed) method. Otherwise it will keep returning these document id's in the return value's 'removed' property.  
+
+I'm going to need feedback on these notes to find out what people are actually expecting with synchronization.
 #### Detect synchronization
 ```js
 Collection.isSyncing()
