@@ -1,6 +1,7 @@
 import localforage from 'localforage'
 import { extendPrototype as extendGetItems } from 'localforage-getitems'
 import { extendPrototype as extendSetItems } from 'localforage-setitems'
+import { LocalCollection } from 'meteor/minimongo'
 
 extendGetItems(localforage)
 extendSetItems(localforage)
@@ -130,20 +131,12 @@ Mongo.Collection.prototype.syncPersisted = function () {
         }
       }
 
-      if (Meteor.status().connected)
-        col.removePersisted(removed).catch(console.error)
-
       _.each(col._collection.queries, query => {
 
         col._collection._recomputeResults(query)
       })
 
-      col._collection._observeQueue.drain()
-
-      Meteor.defer(() => {
-
-        col._isSyncing.set(false)
-      })
+      col._isSyncing.set(false)
 
       resolve({ inserted, updated, removed })
     }).catch(reject)
@@ -193,7 +186,7 @@ Mongo.Collection.prototype.attachPersister = function (selector, options) {
   if (!col._persisters)
     col._persisters = {}
 
-  const persisterId = Random.id()
+  const persisterId = col._collection.next_qid
   const persister = {}
 
   col._persisters[persisterId] = persister
@@ -210,7 +203,7 @@ Mongo.Collection.prototype.attachPersister = function (selector, options) {
       const _id = doc._id
       delete doc._id
 
-      if (!Meteor.status().connected && col._isCommon && !col.isSyncing())
+      if (!Meteor.status().connected && col._isCommon)
         doc._insertedOffline = true
 
       persister._store.setItem(_id, doc).catch(console.error)
@@ -220,14 +213,14 @@ Mongo.Collection.prototype.attachPersister = function (selector, options) {
       const _id = doc._id
       delete doc._id
 
-      if (!Meteor.status().connected && col._isCommon && !col.isSyncing())
+      if (!Meteor.status().connected && col._isCommon)
         doc._updatedOffline = true
 
       persister._store.setItem(_id, doc).catch(console.error)
     },
     removed (doc) {
 
-      if (!Meteor.status().connected && col._isCommon && !col.isSyncing())
+      if (!Meteor.status().connected && col._isCommon)
         persister._store.setItem(doc._id, false).catch(console.error)
       else
         persister._store.removeItem(doc._id).catch(console.error)
